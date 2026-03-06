@@ -83,11 +83,12 @@ module.exports = async function handler(req, res) {
       total:          metadata.total        || "-",
     };
 
-    // Campi specifici airport-transfer
-    if (metadata.service === "airport-transfer") {
-      templateParams.route  = metadata.route  || "-";
+    // Campi specifici airport-transfer / city-tour
+    if (metadata.service === "airport-transfer" || metadata.service === "city-tour") {
+      templateParams.route  = metadata.service_type || metadata.route || "-";
       templateParams.pax    = metadata.pax    || "-";
       templateParams.flight = metadata.flight || "-";
+      templateParams.hours  = metadata.hours  || "-";
     }
 
     // Campi specifici luggage-valet
@@ -95,6 +96,7 @@ module.exports = async function handler(req, res) {
       templateParams.route  = "-";
       templateParams.pax    = metadata.bags ? metadata.bags + " bags" : "-";
       templateParams.flight = "-";
+      templateParams.hours  = "-";
     }
 
     try {
@@ -108,4 +110,3 @@ module.exports = async function handler(req, res) {
   // ---- Conferma ricezione a Stripe ----
   return res.status(200).json({ received: true });
 };
-Book Rome airport transfer service - Claude
