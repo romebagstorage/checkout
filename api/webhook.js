@@ -67,8 +67,7 @@ module.exports = async function handler(req, res) {
 
     console.log("[webhook] Checkout completed for:", metadata.name, metadata.email, "service:", metadata.service);
 
-    // Parametri per il template EmailJS
-    // Campi comuni + campi specifici per servizio
+    // Parametri comuni per il template EmailJS
     const templateParams = {
       name:           metadata.name         || "-",
       phone:          metadata.phone        || "-",
@@ -79,23 +78,23 @@ module.exports = async function handler(req, res) {
       pickup:         metadata.pickup       || "-",
       dropoff:        metadata.dropoff      || "-",
       notes:          metadata.notes        || "-",
-      total:          metadata.total ? "€" + metadata.total : "-"
+      base_price:     metadata.base_price   || "-",
+      night_fee:      metadata.night_fee    || "\u2014",
+      total:          metadata.total        || "-",
     };
 
     // Campi specifici airport-transfer
     if (metadata.service === "airport-transfer") {
-      templateParams.route     = metadata.route     || "-";
-      templateParams.pax       = metadata.pax       || "-";
-      templateParams.flight    = metadata.flight    || "-";
-      templateParams.night_fee = metadata.night_fee || "-";
+      templateParams.route  = metadata.route  || "-";
+      templateParams.pax    = metadata.pax    || "-";
+      templateParams.flight = metadata.flight || "-";
     }
 
     // Campi specifici luggage-valet
     if (metadata.service === "luggage-valet") {
-      templateParams.route     = "-";
-      templateParams.pax       = metadata.bags ? metadata.bags + " bags" : "-";
-      templateParams.flight    = "-";
-      templateParams.night_fee = "N/A";
+      templateParams.route  = "-";
+      templateParams.pax    = metadata.bags ? metadata.bags + " bags" : "-";
+      templateParams.flight = "-";
     }
 
     try {
@@ -103,10 +102,10 @@ module.exports = async function handler(req, res) {
       console.log("[webhook] Email inviata con successo.");
     } catch (err) {
       console.error("[webhook] Errore invio email:", err.message);
-      // Non ritorniamo errore a Stripe — l'email fallita non deve bloccare il flusso
     }
   }
 
   // ---- Conferma ricezione a Stripe ----
   return res.status(200).json({ received: true });
 };
+Book Rome airport transfer service - Claude
