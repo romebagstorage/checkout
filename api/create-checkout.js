@@ -6,11 +6,23 @@
 
 const Stripe = require("stripe");
 
-// ============================
-// PREZZI — AIRPORT TRANSFER
-// ============================
-const AIRPORT_PRICES = { tier_1_3: 70, tier_4: 78, tier_5_6: 94, tier_7_8: 105 };
-const NIGHT_FEE = 18;
+// ════════════════════════════════════════════════════════════════
+// PREZZI AIRPORT TRANSFER (IVA 10% + POS 10% + markup €15 inclusi)
+// ════════════════════════════════════════════════════════════════
+const PRICES = {
+  airport_departure_fco: { tier_1_3:  73, tier_4:  79, tier_5_6:  97, tier_7_8: 109 },
+  airport_arrival_fco:   { tier_1_3:  76, tier_4:  82, tier_5_6: 100, tier_7_8: 112 },
+  airport_departure_cia: { tier_1_3:  73, tier_4:  79, tier_5_6:  97, tier_7_8: 109 },
+  airport_arrival_cia:   { tier_1_3:  76, tier_4:  82, tier_5_6: 100, tier_7_8: 112 },
+};
+
+// Supplemento notturno differenziato (21:30 – 05:30)
+const NIGHT_FEES = {
+  airport_departure_fco:  7,   // partenza dalla struttura
+  airport_departure_cia:  7,
+  airport_arrival_fco:   22,   // arrivo dall'aeroporto
+  airport_arrival_cia:   22,
+};
 
 function paxTier(pax) {
   if (pax <= 3) return "tier_1_3";
@@ -21,22 +33,28 @@ function paxTier(pax) {
 
 function isNight(timeHHMM) {
   if (!timeHHMM) return false;
-  const [hh] = timeHHMM.split(":").map(Number);
-  return hh >= 22 || hh < 6;
+  const [h, m] = timeHHMM.split(":").map(Number);
+  const mins = h * 60 + (m || 0);
+  return mins >= 1290 || mins < 330;  // 21:30 – 05:30
 }
 
-function computeAirportPrice(pax, time) {
-  const paxNum = Math.min(Math.max(parseInt(pax, 10) || 1, 1), 8);
-  const tier   = paxTier(paxNum);
-  const night  = isNight(time);
-  const base   = AIRPORT_PRICES[tier];
-  const total  = base + (night ? NIGHT_FEE : 0);
-  return { total, night, paxNum };
+function computeAirportPrice(route, pax, time) {
+  const paxNum   = Math.min(Math.max(parseInt(pax, 10) || 1, 1), 8);
+  const tier     = paxTier(paxNum);
+  const routeMap = PRICES[route];
+  if (!routeMap) return { base: 0, nightFee: 0, total: 0, night: false, paxNum };
+
+  const base     = routeMap[tier] || 0;
+  const night    = isNight(time);
+  const nightFee = night ? (NIGHT_FEES[route] || 0) : 0;
+  const total    = base + nightFee;
+
+  return { base, nightFee, total, night, paxNum };
 }
 
-// ============================
+// ════════════════════════════════════════════════════════════════
 // HANDLER
-// ============================
+// ════════════════════════════════════════════════════════════════
 module.exports = async function handler(req, res) {
 
   // CORS
@@ -50,13 +68,13 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = req.body;
-    const service = body.service || "airport-transfer"; // default
+    const service = body.service || "airport-transfer";
 
     let session;
 
-    // ==========================================
+    // ──────────────────────────────────────────
     // SERVIZIO: AIRPORT TRANSFER
-    // ==========================================
+    // ──────────────────────────────────────────
     if (service === "airport-transfer") {
       const { name, phone, email, route, service_type, pax, date, time, flight, pickup, dropoff, notes, lang } = body;
 
@@ -64,8 +82,13 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const { total, night, paxNum } = computeAirportPrice(pax, time);
-      const nightLabel = night ? " + night fee" : "";
+      const { base, nightFee, total, night, paxNum } = computeAirportPrice(route, pax, time);
+
+      if (total === 0) {
+        return res.status(400).json({ error: "Invalid route or pricing" });
+      }
+
+      const nightLabel = night ? ` + €${nightFee} night fee` : "";
       const description = `${service_type || route} — ${paxNum} pax — ${date} ${time}${nightLabel}`;
 
       session = await stripe.checkout.sessions.create({
@@ -85,20 +108,16 @@ module.exports = async function handler(req, res) {
         }],
         metadata: {
           service:      "airport-transfer",
-          name:         name,
-          phone:        phone,
-          email:        email,
-          route:        route,
+          name, phone, email, route,
           service_type: service_type || "",
           pax:          String(paxNum),
-          date:         date,
-          time:         time,
+          date, time,
           flight:       flight || "-",
-          pickup:       pickup,
-          dropoff:      dropoff,
+          pickup, dropoff,
           notes:        notes || "-",
-          total:        String(total),
-          night_fee:    night ? "Si (+€18)" : "No",
+          base_price:   String(base),
+          night_fee:    night ? `€${nightFee}` : "—",
+          total:        `€${total}`,
           lang:         lang || "en"
         },
         success_url: `${process.env.SUCCESS_URL || "https://romebagstorage.com/thank-you"}?session_id={CHECKOUT_SESSION_ID}&lang=${lang || "en"}`,
@@ -106,9 +125,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ==========================================
+    // ──────────────────────────────────────────
     // SERVIZIO: LUGGAGE VALET
-    // ==========================================
+    // ──────────────────────────────────────────
     else if (service === "luggage-valet") {
       const { name, phone, email, date, time, service_type, bags, pickup, dropoff, notes, lang } = body;
 
@@ -116,7 +135,6 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // PREZZI LUGGAGE VALET
       const VALET_PRICES = { city: 40, airport: 70, port: 120 };
       const bagsNum = Math.min(Math.max(parseInt(bags, 10) || 1, 1), 6);
       const total = VALET_PRICES[service_type] || 40;
@@ -144,17 +162,16 @@ module.exports = async function handler(req, res) {
         }],
         metadata: {
           service:      "luggage-valet",
-          name:         name,
-          phone:        phone,
-          email:        email,
+          name, phone, email,
           service_type: serviceLabel,
-          date:         date,
+          date,
           time:         time || "-",
           bags:         String(bagsNum),
-          pickup:       pickup,
-          dropoff:      dropoff,
+          pickup, dropoff,
           notes:        notes || "-",
-          total:        String(total),
+          base_price:   String(total),
+          night_fee:    "—",
+          total:        `€${total}`,
           lang:         lang || "en"
         },
         success_url: `${process.env.SUCCESS_URL || "https://romebagstorage.com/thank-you"}?session_id={CHECKOUT_SESSION_ID}&lang=${lang || "en"}`,
@@ -162,9 +179,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // ==========================================
+    // ──────────────────────────────────────────
     // SERVIZIO SCONOSCIUTO
-    // ==========================================
+    // ──────────────────────────────────────────
     else {
       return res.status(400).json({ error: `Unknown service: ${service}` });
     }
