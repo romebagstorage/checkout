@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Booking Confirmed — Rome Bag Storage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #075f8f;
+      --brand2: #2aa7ff;
+      --text: #0f172a;
+      --muted: #516072;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(600px 400px at 30% 20%, rgba(42,167,255,0.12), transparent 55%),
+        radial-gradient(500px 400px at 70% 30%, rgba(7,95,143,0.10), transparent 55%),
+        linear-gradient(180deg, #f4f6f8, #eef2f6);
+    }
+    .card {
+      background: #fff;
+      border: 1px solid rgba(15,23,42,0.10);
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(15,23,42,0.10);
+      max-width: 520px;
+      width: 100%;
+      overflow: hidden;
+      text-align: center;
+    }
+    .header {
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      padding: 32px 24px;
+    }
+    .check {
+      width: 64px;
+      height: 64px;
+      background: rgba(255,255,255,0.20);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .header p {
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .body {
+      padding: 28px 24px;
+    }
+    .body p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .body p strong {
+      color: var(--text);
+    }
+    .steps {
+      text-align: left;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .steps b {
+      display: block;
+      font-size: 13px;
+      color: #166534;
+      margin-bottom: 8px;
+    }
+    .steps ol {
+      padding-left: 18px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 14px;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(90deg, var(--brand), var(--brand2));
+      box-shadow: 0 10px 25px rgba(7,95,143,0.16);
+      transition: transform .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .footer {
+      padding: 16px 24px;
+      background: #f4f6f8;
+      border-top: 1px solid rgba(15,23,42,0.08);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .footer a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="check">&#10003;</div>
+      <h1 id="title">Booking Confirmed!</h1>
+      <p id="subtitle">Your Rome airport transfer has been booked successfully.</p>
+    </div>
+    <div class="body">
+      <p id="msg1">
+        Thank you for your payment! We have received your booking and will contact you on
+        <strong>WhatsApp</strong> shortly to confirm pickup details and driver information.
+      </p>
+      <div class="steps">
+        <b id="nextTitle">What happens next?</b>
+        <ol>
+          <li id="step1">You'll receive a confirmation email at the address you provided.</li>
+          <li id="step2">We'll message you on WhatsApp with driver details and meeting point.</li>
+          <li id="step3">On the day of your transfer, your driver will be waiting for you!</li>
+        </ol>
+      </div>
+      <p id="msg2">
+        Questions? Message us on WhatsApp at <strong>+39 333 863 7338</strong>
+        or email <strong>info@romebagstorage.com</strong>.
+      </p>
+      <a class="btn" href="https://romebagstorage.com" id="btnHome">Back to Rome Bag Storage</a>
+    </div>
+    <div class="footer">
+      Rome Bag Storage &bull;
+      <a href="https://romebagstorage.com">romebagstorage.com</a> &bull;
+      +39 333 863 7338
+    </div>
+  </div>
+
+  <script>
+    // Semplice i18n basato su parametro URL o localStorage
+    const params = new URLSearchParams(window.location.search);
+    const lang = params.get("lang") || localStorage.getItem("lang") || "en";
+
+    if (lang === "it") {
+      document.documentElement.lang = "it";
+      document.getElementById("title").textContent     = "Prenotazione confermata!";
+      document.getElementById("subtitle").textContent   = "Il tuo transfer aeroportuale a Roma e' stato prenotato con successo.";
+      document.getElementById("msg1").innerHTML         = 'Grazie per il pagamento! Abbiamo ricevuto la tua prenotazione e ti contatteremo su <strong>WhatsApp</strong> per confermare i dettagli del pick-up e le informazioni sul driver.';
+      document.getElementById("nextTitle").textContent  = "Prossimi passi:";
+      document.getElementById("step1").textContent      = "Riceverai un'email di conferma all'indirizzo che hai fornito.";
+      document.getElementById("step2").textContent      = "Ti scriveremo su WhatsApp con i dettagli del driver e il punto di incontro.";
+      document.getElementById("step3").textContent      = "Il giorno del transfer, il tuo driver ti aspettera'!";
+      document.getElementById("msg2").innerHTML         = 'Domande? Scrivici su WhatsApp al <strong>+39 333 863 7338</strong> o email <strong>info@romebagstorage.com</strong>.';
+      document.getElementById("btnHome").textContent    = "Torna a Rome Bag Storage";
+    }
+  </script>
+</body>
+</html>

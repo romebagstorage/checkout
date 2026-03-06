@@ -1,0 +1,9 @@
+{
+  "name": "rome-bag-storage-checkout",
+  "version": "1.0.0",
+  "description": "Stripe Checkout backend for Rome Bag Storage airport transfers & luggage valet",
+  "private": true,
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}
