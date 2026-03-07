@@ -19,10 +19,10 @@ function getRawBody(req) {
 }
 
 // ---- Invia email via EmailJS REST API ----
-async function sendEmailJS(templateParams) {
+async function sendEmailJS(templateId, templateParams) {
   const payload = {
     service_id:  process.env.EMAILJS_SERVICE_ID,
-    template_id: process.env.EMAILJS_TEMPLATE_ID,
+    template_id: templateId,
     user_id:     process.env.EMAILJS_PUBLIC_KEY,
     template_params: templateParams
   };
@@ -35,7 +35,7 @@ async function sendEmailJS(templateParams) {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`EmailJS error: ${response.status} — ${text}`);
+    throw new Error(`EmailJS error (${templateId}): ${response.status} — ${text}`);
   }
 
   return true;
@@ -99,11 +99,27 @@ module.exports = async function handler(req, res) {
       templateParams.hours  = "-";
     }
 
+    // ── 1) Email notifica ad Alberto ──
     try {
-      await sendEmailJS(templateParams);
-      console.log("[webhook] Email inviata con successo.");
+      await sendEmailJS(process.env.EMAILJS_TEMPLATE_ID, templateParams);
+      console.log("[webhook] Email notifica inviata con successo.");
     } catch (err) {
-      console.error("[webhook] Errore invio email:", err.message);
+      console.error("[webhook] Errore invio email notifica:", err.message);
+    }
+
+    // ── 2) Email conferma al cliente ──
+    const customerTemplateId = process.env.EMAILJS_TEMPLATE_ID_CUSTOMER;
+    if (customerTemplateId && metadata.email) {
+      try {
+        const customerParams = {
+          ...templateParams,
+          to_email: metadata.email,   // EmailJS invia a questo indirizzo
+        };
+        await sendEmailJS(customerTemplateId, customerParams);
+        console.log("[webhook] Email conferma cliente inviata a:", metadata.email);
+      } catch (err) {
+        console.error("[webhook] Errore invio email cliente:", err.message);
+      }
     }
   }
 
