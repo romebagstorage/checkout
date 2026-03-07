@@ -167,13 +167,21 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const VALET_PRICES = { city: 40, airport: 70, port: 120 };
-      const bagsNum = Math.min(Math.max(parseInt(bags, 10) || 1, 1), 6);
-      const total = VALET_PRICES[service_type] || 40;
+      // Tabella prezzi per bagaglio (markup €15 incluso, invisibile al cliente)
+      const VALET_PRICES = {
+        city:    [0, 30, 39, 48, 53, 59, 64, 68, 71, 73, 75],
+        airport: [0, 110, 119, 128, 133, 139, 144, 148, 151, 153, 155]
+      };
 
-      const serviceLabel = service_type === "city" ? "City Pickup & Delivery"
-                         : service_type === "airport" ? "Airport Pickup/Delivery"
-                         : service_type === "port" ? "Civitavecchia Port Pickup/Delivery"
+      const bagsNum = Math.min(Math.max(parseInt(bags, 10) || 1, 1), 10);
+      const table = VALET_PRICES[service_type];
+      if (!table) {
+        return res.status(400).json({ error: "Invalid service type" });
+      }
+      const total = table[bagsNum] || table[10];
+
+      const serviceLabel = service_type === "city" ? "City Pickup, Storage & Return"
+                         : service_type === "airport" ? "Airport Luggage to/from FCO/CIA"
                          : service_type;
       const description = `Luggage Valet — ${serviceLabel} — ${bagsNum} bags — ${date}${time ? " " + time : ""}`;
 
