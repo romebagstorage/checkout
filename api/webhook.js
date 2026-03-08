@@ -24,6 +24,7 @@ async function sendEmailJS(templateId, templateParams) {
     service_id:  process.env.EMAILJS_SERVICE_ID,
     template_id: templateId,
     user_id:     process.env.EMAILJS_PUBLIC_KEY,
+    accessToken: process.env.EMAILJS_PRIVATE_KEY,
     template_params: templateParams
   };
 
